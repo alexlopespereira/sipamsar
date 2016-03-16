@@ -16,8 +16,8 @@ email=alex.pereira@sipam.gov.br
 
 about=Conjunto de ferramentas desenvolvidas de para apoiar a gestão do projeto Amazônia SAR.
 
-tracker=https://github.com/alexlopespereira/sipamsar/issues
-repository=https://github.com/alexlopespereira/sipamsar
+tracker=https://github.com/mariofraga/sipamsar/issues
+repository=https://github.com/mariofraga/sipamsar
 
 # End of mandatory metadata
 
@@ -29,7 +29,7 @@ repository=https://github.com/alexlopespereira/sipamsar
 # Tags are comma separated with spaces allowed
 tags=SIPAM, Amazônia SAR, Amazônia, Brasil, SAR
 
-homepage=https://github.com/alexlopespereira/sipamsar
+homepage=https://github.com/mariofraga/sipamsar
 category=Vector
 icon=sipam.png
 # experimental flag
