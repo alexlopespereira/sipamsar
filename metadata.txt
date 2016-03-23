@@ -10,7 +10,7 @@
 name=sipamsar
 qgisMinimumVersion=2.0
 description=Conjunto de ferramentas desenvolvidas de para apoiar a gestão do projeto Amazônia SAR.
-version=0.9
+version=1.0
 author=Alex Lopes Pereira e José Mário Fraga Miranda
 email=alex.pereira@sipam.gov.br
 
