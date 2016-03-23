@@ -77,15 +77,15 @@ class sipamsar:
         # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar(u'sipamsar')
         self.toolbar.setObjectName(u'sipamsar')
+
         self.dlg.buttonBox.button(QDialogButtonBox.Ok).setEnabled(True)
         self.dlg.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.dbInsertData)
-        self.dlg.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancelAction)
-
+        self.dlg.buttonBox.button(QDialogButtonBox.Ignore).clicked.connect(self.cancelAction)
+        self.dlg.buttonBox.button(QDialogButtonBox.Close).clicked.connect(self.removeRelationship)
+        self.dlg.buttonBox.button(QDialogButtonBox.Ok).setText("Vincular")
+        self.dlg.buttonBox.button(QDialogButtonBox.Close).setText("Desvincular")
+        self.dlg.buttonBox.button(QDialogButtonBox.Ignore).setText("Cancelar")
         self.dbdialog = dbconnectionDialog()
-
-
-
-
         # self.dbdialog.buttonBox.button(QDialogButtonBox.Ok).setEnabled(True)
         # self.dbdialog.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.getCredentials)
         # self.dbdialog.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancelAction)
@@ -220,6 +220,40 @@ class sipamsar:
         self.iface.removeToolBarIcon(self.taskAction)
         self.iface.removeToolBarIcon(self.uploadAction)
 
+    def removeRelationship(self):
+        actlayer = qgis.utils.iface.activeLayer()
+        index = self.modelt.index(0,0)
+        columnindex=0
+        for i in range(0,self.modelt.columnCount(index)):
+            qresult = self.modelt.headerData(i, Qt.Horizontal, 0)
+            if self.keycolumn == qresult:
+                columnindex=i
+                break
+        idlist = []
+
+        for row in range(self.modelt.rowCount()):
+            index = self.modelt.index(row,columnindex)
+            id = self.modelt.data(index,columnindex)
+            idlist.append(id)
+
+        queryinsert = QSqlQuery()
+        querystr3 = "SELECT " + self.schema + ".del_row(:schema, :ref_id);" # "DELETE FROM " + self.schema+ " prodser.user_cim WHERE " self.keycolumn + " IN (" + stringlist + ");"
+
+        for id in idlist:
+            # create an item with a caption
+            #print "id="+str(id)+", curruid="+str(curruid)+", fullname="+fullname
+            queryinsert.prepare(querystr3)
+            queryinsert.bindValue(":schema", self.schema)
+            queryinsert.bindValue(":ref_id", id)
+            testquery = queryinsert.exec_()
+            if testquery:
+                print "deleted: ", id
+            else:
+                print "not deleted: " + id + queryinsert.lastError().text()
+                print querystr3
+
+        actlayer.setSubsetString("")
+        self.dlg.accept()
 
     def dbInsertData(self):
         actlayer = qgis.utils.iface.activeLayer()
@@ -229,39 +263,35 @@ class sipamsar:
             qresult = self.modelt.headerData(i, Qt.Horizontal, 0)
             if self.keycolumn == qresult:
                 columnindex=i
-        #print "columnindex: ",columnindex,"row count: ", modelt.rowCount()
+                break
         idlist = []
         curruid = self.dlg.comboBox.itemData(self.dlg.comboBox.currentIndex())
+        if curruid=="0":
+            msgBox = PyQt4.QtGui.QMessageBox(QMessageBox.Warning, u"Atenção", u"Selecione um usuário")
+            msgBox.setText("Selecione um usuario")
+            msgBox.setStandardButtons(QMessageBox.Ok);
+            msgBox.exec_()
+            return
+
         for row in range(self.modelt.rowCount()):
             index = self.modelt.index(row,columnindex)
             id = self.modelt.data(index,columnindex)
             idlist.append(id)
 
-        querystr = "SELECT pg_catalog.obj_description(c.oid) AS table_comment FROM pg_class c WHERE c.relname = '" + actlayer.name() + "' limit 1"
-        query = db.exec_(querystr)
-        query.next()
-        record = query.record()
-        tablename = record.value(0)
-
-        querystr2 = "SELECT d.nspname AS schema_name FROM pg_class c LEFT JOIN pg_namespace d ON d.oid = c.relnamespace WHERE c.relname = '" + tablename + "'"
-        query = db.exec_(querystr2)
-        query.next()
-        record = query.record()
-        schemaname = record.value(0)
-        fullname = schemaname + "." + tablename
+        queryinsert = QSqlQuery()
+        querystr3 = "SELECT "+self.schema+ ".insert_or_update(:ref_index, :ref_user);"
         for id in idlist:
-            # create an item with a caption
-            queryinsert = QSqlQuery()
-            querystr3 = "INSERT INTO " + fullname + " (ref_index, ref_user) VALUES (:ref_index, :ref_user)"
+            #create an item with a caption
+            #print "id="+str(id)+", curruid="+str(curruid)+", fullname="+fullname
             queryinsert.prepare(querystr3)
             queryinsert.bindValue(":ref_user", curruid)
             queryinsert.bindValue(":ref_index", id)
-            print "id="+str(id)+", curruid="+str(curruid)+", fullname="+fullname
             testquery = queryinsert.exec_()
             if testquery:
                 print "inserted: ", id
             else:
-                print "not inserted: "+ id
+                print "not inserted: " + id + queryinsert.lastError().text()
+                print querystr3
 
         actlayer.setSubsetString("")
         self.dlg.accept()
@@ -310,20 +340,22 @@ class sipamsar:
         """Run method that performs all the real work"""
         self.dlg.comboBox.clear()
         actlayer = qgis.utils.iface.activeLayer()
-        global db
-        db = QSqlDatabase.addDatabase("QPSQL")
-        if db.isValid():
+
+        self.db = QSqlDatabase.addDatabase("QPSQL")
+        if self.db.isValid():
             dsu = QgsDataSourceURI( actlayer.dataProvider().dataSourceUri() )
             realmsc = actlayer.dataProvider().dataSourceUri()
-            db.setHostName(dsu.host())
-            db.setDatabaseName(dsu.database())
-            db.setUserName(dsu.username())
-            db.setPassword(dsu.password())
-            db.setPort(int(dsu.port()))
+            self.schema = dsu.schema()
+            self.db.setHostName(dsu.host())
+            self.db.setDatabaseName(dsu.database())
+            self.db.setUserName(dsu.username())
+            self.db.setPassword(dsu.password())
+            self.db.setPort(int(dsu.port()))
             self.keycolumn = dsu.keyColumn()
-            ok = db.open()
+            ok = self.db.open()
             if ok:
-                query = db.exec_("""select * from prodser.user""")
+                query = self.db.exec_("select * from " + self.schema + ".tb_user order by responsavel asc")
+                self.dlg.comboBox.addItem("", "0")
                 # iterate over the rows
                 while query.next():
                     record = query.record()
@@ -335,12 +367,13 @@ class sipamsar:
                 self.dbdialog.setRealm(realmsc)
                 self.dbdialog.setUsername(QgsDataSourceURI( actlayer.dataProvider().dataSourceUri()).username())
                 if self.dbdialog.exec_() == QDialog.Accepted:
-                    db.setUserName(self.dbdialog.getUsername())
-                    db.setPassword(self.dbdialog.getPassword())
-                    ok = db.open()
+                    self.db.setUserName(self.dbdialog.getUsername())
+                    self.db.setPassword(self.dbdialog.getPassword())
+                    ok = self.db.open()
                     if ok:
-                        query = db.exec_("""select * from prodser.user""")
+                        query = self.db.exec_("select * from " + self.schema + ".tb_user order by responsavel asc")
                         # iterate over the rows
+                        self.dlg.comboBox.addItem("", "0")
                         while query.next():
                             record = query.record()
                             name = record.value(1)
@@ -348,7 +381,7 @@ class sipamsar:
                             self.dlg.comboBox.addItem(name, uid)
                         self.populateTable()
                     else:
-                        print db.lastError().text()
+                        print self.db.lastError().text()
 
 
 
