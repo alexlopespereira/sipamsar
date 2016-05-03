@@ -237,7 +237,7 @@ class sipamsar:
             idlist.append(id)
 
         queryinsert = QSqlQuery()
-        querystr3 = "SELECT " + self.schema + ".del_row(:schema, :ref_id);" # "DELETE FROM " + self.schema+ " prodser.user_cim WHERE " self.keycolumn + " IN (" + stringlist + ");"
+        querystr3 = "SELECT " + self.schema + ".fc_del_row(:schema, :ref_id);"
 
         for id in idlist:
             # create an item with a caption
@@ -279,7 +279,7 @@ class sipamsar:
             idlist.append(id)
 
         queryinsert = QSqlQuery()
-        querystr3 = "SELECT "+self.schema+ ".insert_or_update(:ref_index, :ref_user);"
+        querystr3 = "SELECT " + self.schema + ".update_amsar_cim(:ref_index, :ref_user);"
         for id in idlist:
             #create an item with a caption
             #print "id="+str(id)+", curruid="+str(curruid)+", fullname="+fullname
@@ -288,7 +288,7 @@ class sipamsar:
             queryinsert.bindValue(":ref_index", id)
             testquery = queryinsert.exec_()
             if testquery:
-                print "inserted: ", id
+                print "inserted. index id: ", id , "curruid=", curruid
             else:
                 print "not inserted: " + id + queryinsert.lastError().text()
                 print querystr3
@@ -354,7 +354,7 @@ class sipamsar:
             self.keycolumn = dsu.keyColumn()
             ok = self.db.open()
             if ok:
-                query = self.db.exec_("select * from " + self.schema + ".tb_user order by responsavel asc")
+                query = self.db.exec_("select * from " + self.schema + ".tb_responsavel order by no_responsavel asc")
                 self.dlg.comboBox.addItem("", "0")
                 # iterate over the rows
                 while query.next():
@@ -371,7 +371,7 @@ class sipamsar:
                     self.db.setPassword(self.dbdialog.getPassword())
                     ok = self.db.open()
                     if ok:
-                        query = self.db.exec_("select * from " + self.schema + ".tb_user order by responsavel asc")
+                        query = self.db.exec_("select * from " + self.schema + ".tb_responsavel order by no_responsavel asc")
                         # iterate over the rows
                         self.dlg.comboBox.addItem("", "0")
                         while query.next():
