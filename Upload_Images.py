@@ -38,11 +38,14 @@ from qgis.gui import QgsAttributeTableModel
 import PyQt4.QtGui
 import os.path
 import shutil
+from qgis.gui import QgsMessageBar
+import sys, subprocess, re
+from sys import platform as _platform
+#for debuging purposes
+import pdb
 
 
-
-
-
+#TODO Implement download log update asyncronously
 class UploadImages:
     """QGIS Plugin Implementation."""
 
@@ -87,7 +90,8 @@ class UploadImages:
         self.dlg.buttonBox.button(QDialogButtonBox.Ok).setEnabled(True)
         self.dlg.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.copyFiles)
         self.dlg.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancelAction)
-        self.dbdialog = dbconnectionDialog()
+
+        self.downloadOK = None
 
 
     def selectOutputFile(self):
@@ -96,6 +100,13 @@ class UploadImages:
         self.dlg.lineEdit.setText(filename)
 
     def cancelAction(self):
+        
+        if self.p is not None:
+            self.p.kill()
+
+        #pyqtRemoveInputHook()
+        #pdb.set_trace()
+        self.downloadOK = False
         self.dlg.reject()
 
     def dbInsertData(self):
@@ -136,15 +147,16 @@ class UploadImages:
 
     def copyFiles(self):
 
-        actlayer1 = qgis.utils.iface.activeLayer()
-        features1 = actlayer1.selectedFeatures()
-        self.dlg.progressBar.setMaximum(len(features1))
+        #actlayer1 = qgis.utils.iface.activeLayer()
+        #features1 = actlayer1.selectedFeatures()
+        self.dlg.progressBar.setMaximum(len(self.features))
         self.dlg.progressBar.setValue(0)
 
         msgBox = PyQt4.QtGui.QMessageBox()
 
+        diretorioDestino = self.dlg.lineEdit.text()
 
-        if(self.dlg.lineEdit.text()):
+        if(diretorioDestino):
             pass
         else:
             msgBox.setText("Selecione a Pasta de Destino!")
@@ -152,39 +164,98 @@ class UploadImages:
             msgBox.exec_()
             return
 
-        actlayer = qgis.utils.iface.activeLayer()
+        #actlayer = qgis.utils.iface.activeLayer()
         index = self.modelt.index(0,0)
-        columnindex=0
 
-        codFilename = 0
-        codFilepath = 0
-
-        for i in range(0,self.modelt.columnCount(index)):
-            qresult = self.modelt.headerData(i, Qt.Horizontal, 0)
-            if qresult == "filename":
-                codFilename = i
-            if qresult == "filepath":
-                codFilepath = i
-
-        idlist = []
-        curruid = 100 #self.dlg.comboBox.itemData(self.dlg.comboBox.currentIndex())
         contadorBarra = 0
         for row in range(self.modelt.rowCount()):
-            str(self.moveArquivo(self.modelt.data(self.modelt.index(row,codFilepath),0), self.modelt.data(self.modelt.index(row,codFilename),0)))
+            self.downloadArquivo(self.modelt.data(self.modelt.index(row,self.dlg.comboBoxCampos.currentIndex()),
+                                                  0),diretorioDestino)
             contadorBarra += 1
-
-            id = self.modelt.data(self.modelt.index(row,columnindex),0)
             self.dlg.progressBar.setValue(contadorBarra)
-            idlist.append(id)
+            #pyqtRemoveInputHook()
+            #pdb.set_trace()
+
+            if self.downloadOK is not False:
+                self.downloadOK = True
+
+        if self.downloadOK is True:
+            msgBox.setText("Imagens Copiadas com Sucesso!")
+            msgBox.setStandardButtons(QMessageBox.Ok);
+            msgBox.exec_()
+
+            self.dlg.accept()
+    
+    def downloadArquivo(self, caminhoArquivo, diretorioDestino):
+
+        nomeArquivo = os.path.basename(caminhoArquivo)
+
+        #pyqtRemoveInputHook()
+        #pdb.set_trace()
+
+        if "win" in _platform:
+
+            #for generic use, test fullpath directory delimiter
+            #and replace in case of using Linux path
+            caminhoArquivo.replace("/","\\")
+            command = ['robocopy', os.path.dirname(caminhoArquivo), '%s\%s' % (diretorioDestino, nomeArquivo)]
+            
+            if command is not '':
+
+                self.p = subprocess.Popen(command, stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                
+                out = self.p.stdout.readline(500)
+                if out is not '': 
+                    self.dlg.textEditDownloadProgress.setText(out)
+                    sys.stdout.flush()
+                    PyQt4.QtGui.QApplication.processEvents()
+
+                #update UI
+                while self.p.poll() is None:
+
+                    out = self.p.stdout.readline(500)
+                    match = re.search('\\r.+\\r',out)
+
+                    if out is not '' and match is not None:
+                        self.dlg.textEditDownloadProgress.setText(match.group(0).split('\r')[1])
+                    sys.stdout.flush()
+                    PyQt4.QtGui.QApplication.processEvents()
+
+        elif "linux" in _platform:
 
 
-        msgBox.setText("Imagens Copiadas com Sucesso!")
-        msgBox.setStandardButtons(QMessageBox.Ok);
-        msgBox.exec_()
+            #for generic use, test fullpath directory delimiter
+            #and replace in case of using Windows UNC
+            caminhoArquivo.replace("\\","/")
+            
+            #testing if file path is samba relative 
+            #TODO - Define other methods 
+            if "smb" in caminhoArquivo:
+                #defining command (depends on smbclient tools installed)
+                command = ['/usr/bin/smbget', '--guest', '--nonprompt', caminhoArquivo, '-o', '%s/%s' % (diretorioDestino,nomeArquivo)]
+            if command is not '':
 
-        self.dlg.accept()
+                self.p = subprocess.Popen(command,
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                #update UI
+                while self.p.poll() is None:
 
-        print "Saiuuuu"
+                    out = self.p.stdout.readline(500)
+                    match = re.search('\\r.+\\r',out)
+
+                    if out is not '' and match is not None:
+                        self.dlg.textEditDownloadProgress.setText(match.group(0).split('\r')[1])
+                    sys.stdout.flush()
+                    PyQt4.QtGui.QApplication.processEvents()
+
+        else:
+            #levantar exceção de plataforma não identificada
+            pass
+
+
+
+        return 
 
     def moveArquivo(self, caminhoArquivo, nomeArquivio):
         #print "Nome Original111 => " + str(caminhoArquivo)
@@ -241,7 +312,7 @@ class UploadImages:
         :param parent: Parent widget for the new action. Defaults None.
         :type parent: QWidget
 
-        :param whats_this: Optional text to show in the status bar when the
+        elf.modelt.headerData(i, Qt.Horizontal, 0)param whats_this: Optional text to show in the status bar when the
             mouse pointer hovers over the action.
 
         :returns: The action that was created. Note that the action is also
@@ -301,83 +372,62 @@ class UploadImages:
 
     def populateTable(self):
         actlayer = qgis.utils.iface.activeLayer()
-        #label = "Feicoes selecionadas em " + actlayer.name() + ":"
-        # Add some textual items
-        features = actlayer.selectedFeatures()
+        self.features = actlayer.selectedFeatures()
         fidlist = []
 
-        for f in features:
-            fidlist.append(f[self.keycolumn])
+        if len(self.features) > 0:
+            for f in self.features:
+                fidlist.append(f[self.keycolumn])
 
-        selection=[]
-        strsel=self.keycolumn + " IN ("
+            selection=[]
+            strsel=self.keycolumn + " IN ("
 
+            for fid in fidlist:
+                selection.append(fid)
+                strsel=strsel+ "'" + str(fid) + "',"
 
+            strsel=strsel[:-1] + ")"
+            actlayer.setSubsetString(strsel)
 
-        for fid in fidlist:
-            selection.append(fid)
-            strsel=strsel+ "'" + str(fid) + "',"
+            cache = QgsVectorLayerCache(actlayer, 50000)
+            self.modelt = QgsAttributeTableModel(cache)
+            self.modelt.loadLayer()
+            table = self.dlg.tableView
+            table.setModel(self.modelt)
+            self.dlg.show()
+            self.dlg.exec_()
+        else:
+            self.iface.messageBar().pushMessage("Error", QCoreApplication.translate("sipamsar","At least one feature need to be selected."), level=QgsMessageBar.WARNING)
+            QgsMessageLog.logMessage("At least one feature need to be selected.", level=QgsMessageLog.WARNING)
 
-        strsel=strsel[:-1] + ")"
-        actlayer.setSubsetString(strsel)
+    def populateFields(self):
 
-
+        actlayer = qgis.utils.iface.activeLayer()
         cache = QgsVectorLayerCache(actlayer, 50000)
-        self.modelt = QgsAttributeTableModel(cache)
-        self.modelt.loadLayer()
-        table = self.dlg.tableView
-        table.setModel(self.modelt)
-         # show the dialog
-        self.dlg.show()
-        # Run the dialog event loop
-        # global curruid
-        # curruid = self.dlg.comboBox.itemData(self.dlg.comboBox.currentIndex())
-        self.dlg.exec_()
+        self.modelc = QgsAttributeTableModel(cache)
+        self.modelc.loadLayer()
 
+        index = self.modelc.index(0,0)
+
+
+        campos = []
+        for i in range(0,self.modelc.columnCount(index)):
+            campos.append(self.modelc.headerData(i, Qt.Horizontal, Qt.DisplayRole))
+        
+        self.dlg.comboBoxCampos.addItems(campos)
 
     def run(self):
         """Run method that performs all the real work"""
         #self.dlg.comboBox.clear()
         actlayer = qgis.utils.iface.activeLayer()
-        global db
-        db = QSqlDatabase.addDatabase("QPSQL")
-        if db.isValid():
-            dsu = QgsDataSourceURI( actlayer.dataProvider().dataSourceUri() )
-            realmsc = actlayer.dataProvider().dataSourceUri()
-            db.setHostName(dsu.host())
-            db.setDatabaseName(dsu.database())
-            db.setUserName(dsu.username())
-            db.setPassword(dsu.password())
-            db.setPort(int(dsu.port()))
-            self.keycolumn = dsu.keyColumn()
-            ok = db.open()
-            if ok:
-                teste = 1
-                query = db.exec_("""select * from prodser.user""")
-                    # iterate over the rows
-                #while query.next():
-                #    record = query.record()
-                 #   name = record.value(1)
-                 #   uid = record.value(0)
-                 #   self.dlg.comboBox.addItem(name, uid)
-                self.populateTable()
-            else:
-                self.dbdialog.setRealm(realmsc)
-                self.dbdialog.setUsername(QgsDataSourceURI( actlayer.dataProvider().dataSourceUri()).username())
-                if self.dbdialog.exec_() == QDialog.Accepted:
-                    db.setUserName(self.dbdialog.getUsername())
-                    db.setPassword(self.dbdialog.getPassword())
-                    ok = db.open()
-                    if ok:
-                        pass
-                        query = db.exec_("""select * from prodser.user""")
-                        # iterate over the rows
-                      #  while query.next():
-                        #    record = query.record()
-                        #    name = record.value(1)
-                        #    uid = record.value(0)
-                        #    self.dlg.comboBox.addItem(name, uid)
-                        self.populateTable()
-                    else:
-                        print db.lastError().text()
+        
+        if actlayer is None:
+            self.iface.messageBar().pushMessage("Error", QCoreApplication.translate("sipamsar","No loaded layer available. Please, choose one layer and select the features to download/upload."), level=QgsMessageBar.WARNING)
+            QgsMessageLog.logMessage("No loaded layer available. Please, choose one layer and select the features to download/upload.", level=QgsMessageLog.WARNING)
+            return
+
+        dsu = QgsDataSourceURI( actlayer.dataProvider().dataSourceUri() )
+        self.keycolumn = dsu.keyColumn()
+        self.populateFields()
+        self.populateTable()
 

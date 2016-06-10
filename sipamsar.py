@@ -187,13 +187,13 @@ class sipamsar:
         self.iface.addPluginToMenu("sipamsar", self.taskAction)
 
         # create editAction that will start metadata editor
-        self.uploadAction = QAction(QIcon(":/plugins/sipamsar/upload.png"), QCoreApplication.translate("sipamsar", "Task Manager"), self.iface.mainWindow())
-        self.uploadAction.setStatusTip(QCoreApplication.translate("sipamsar", "Task Manager"))
-        self.uploadAction.setWhatsThis(QCoreApplication.translate("sipamsar", "Task Manager"))
+        self.uploadAction = QAction(QIcon(":/plugins/sipamsar/upload.png"), QCoreApplication.translate("sipamsar", "Download/Upload Selected Images"), self.iface.mainWindow())
+        self.uploadAction.setStatusTip(QCoreApplication.translate("sipamsar", "Download/Upload Selected Images"))
+        self.uploadAction.setWhatsThis(QCoreApplication.translate("sipamsar", "Download/Upload Selected Images"))
         self.iface.addPluginToMenu("sipamsar", self.taskAction)
 
-        self.toolBar = self.iface.addToolBar(QCoreApplication.translate("sipamsar", "Task Manager"))
-        self.toolBar.setObjectName(QCoreApplication.translate("sipamsar", "Task Manager"))
+        self.toolBar = self.iface.addToolBar(QCoreApplication.translate("sipamsar", "SipamSAR Toolbar"))
+        self.toolBar.setObjectName(QCoreApplication.translate("sipamsar", "SipamSAR Toolbar"))
 
         self.taskAction.triggered.connect(self.doTask)
         self.uploadAction.triggered.connect(self.doUpload)
