@@ -198,7 +198,7 @@ class UploadImages:
             #for generic use, test fullpath directory delimiter
             #and replace in case of using Linux path
             caminhoArquivo.replace("/","\\")
-            command = ['robocopy', os.path.dirname(caminhoArquivo), '%s\%s' % (diretorioDestino, nomeArquivo)]
+            command = ['robocopy', os.path.dirname(caminhoArquivo), diretorioDestino, nomeArquivo]
             
             if command is not '':
 
