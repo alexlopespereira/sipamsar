@@ -192,62 +192,75 @@ class UploadImages:
 
         #pyqtRemoveInputHook()
         #pdb.set_trace()
-
+        #if(os.path.isfile(diretorioDestino,nomeArquivo))
         if "win" in _platform:
 
             #for generic use, test fullpath directory delimiter
             #and replace in case of using Linux path
             caminhoArquivo.replace("/","\\")
-            command = ['robocopy', os.path.dirname(caminhoArquivo), diretorioDestino, nomeArquivo]
-            
-            if command is not '':
+            command = ''
+            if not (os.path.isfile(diretorioDestino+'/'+ nomeArquivo+'.zr')):
+                command = ['robocopy', os.path.dirname(caminhoArquivo), diretorioDestino, nomeArquivo]
 
-                self.p = subprocess.Popen(command, stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                
-                out = self.p.stdout.readline(500)
-                if out is not '': 
-                    self.dlg.textEditDownloadProgress.setText(out)
-                    sys.stdout.flush()
-                    PyQt4.QtGui.QApplication.processEvents()
+                if command is not '':
 
-                #update UI
-                while self.p.poll() is None:
+                    self.p = subprocess.Popen(command, stdin=subprocess.PIPE,
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
                     out = self.p.stdout.readline(500)
-                    match = re.search('\\r.+\\r',out)
+                    if out is not '':
+                        self.dlg.textEditDownloadProgress.setText(out)
+                        sys.stdout.flush()
+                        PyQt4.QtGui.QApplication.processEvents()
 
-                    if out is not '' and match is not None:
-                        self.dlg.textEditDownloadProgress.setText(match.group(0).split('\r')[1])
-                    sys.stdout.flush()
-                    PyQt4.QtGui.QApplication.processEvents()
+                    #update UI
+                    while self.p.poll() is None:
+
+                        out = self.p.stdout.readline(500)
+                        match = re.search('\\r.+\\r',out)
+
+                        if out is not '' and match is not None:
+                            self.dlg.textEditDownloadProgress.setText(match.group(0).split('\r')[1])
+                        sys.stdout.flush()
+                        PyQt4.QtGui.QApplication.processEvents()
+
+                    arq = open(diretorioDestino + '/' + nomeArquivo + '.zr', "w")
+                    arq.close()
 
         elif "linux" in _platform:
-
 
             #for generic use, test fullpath directory delimiter
             #and replace in case of using Windows UNC
             caminhoArquivo.replace("\\","/")
-            
-            #testing if file path is samba relative 
-            #TODO - Define other methods 
-            if "smb" in caminhoArquivo:
-                #defining command (depends on smbclient tools installed)
-                command = ['/usr/bin/smbget', '--guest', '--nonprompt', caminhoArquivo, '-o', '%s/%s' % (diretorioDestino,nomeArquivo)]
-            if command is not '':
 
-                self.p = subprocess.Popen(command,
-                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                #update UI
-                while self.p.poll() is None:
+            command = ''
+            command1 = ''
+            if not (os.path.isfile(diretorioDestino + "//" + nomeArquivo + '.zr')):
+                #testing if file path is samba relative
+                #TODO - Define other methods
+                if ("smb" in caminhoArquivo):
 
-                    out = self.p.stdout.readline(500)
-                    match = re.search('\\r.+\\r',out)
+                    #defining command (depends on smbclient tools installed)
+                    command = ['/usr/bin/smbget', '--guest', '--nonprompt', caminhoArquivo, '-o', '%s/%s' % (diretorioDestino,nomeArquivo)]
 
-                    if out is not '' and match is not None:
-                        self.dlg.textEditDownloadProgress.setText(match.group(0).split('\r')[1])
-                    sys.stdout.flush()
-                    PyQt4.QtGui.QApplication.processEvents()
+                if command is not '':
+
+                    self.p = subprocess.Popen(command,
+                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    #update UI
+                    while self.p.poll() is None:
+
+                        out = self.p.stdout.readline(500)
+                        match = re.search('\\r.+\\r',out)
+
+                        if out is not '' and match is not None:
+                            self.dlg.textEditDownloadProgress.setText(match.group(0).split('\r')[1])
+                        sys.stdout.flush()
+                        PyQt4.QtGui.QApplication.processEvents()
+
+
+                arq = open(diretorioDestino+'/'+nomeArquivo + '.zr', "w")
+                arq.close()
 
         else:
             #levantar exceção de plataforma não identificada
