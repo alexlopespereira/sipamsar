@@ -187,9 +187,17 @@ class UploadImages:
             self.dlg.accept()
     
     def downloadArquivo(self, caminhoArquivo, diretorioDestino):
-
+        print("Inicio3")
+        #caminhoArquivo = r'\\172.23.5.17\cotec\divabd\Mario\SIGRH.png'
+        caminhoSalvar = caminhoArquivo[caminhoArquivo.find("\\indice_imagens\\"):]
+        #caminhoSalvar = '\cotec\divabd\Mario\SIGRH.png'
+        caminhoSalvar.replace("\\", "/")
+        print("caminho 2 = "+caminhoArquivo)
+        print("CaminhoSalvar"+caminhoSalvar)
+        #nomeArquivo = caminhoArquivo
+        #print("NomeArquivo="+nomeArquivo)
         nomeArquivo = os.path.basename(caminhoArquivo)
-
+        print(caminhoArquivo)
         #pyqtRemoveInputHook()
         #pdb.set_trace()
         #if(os.path.isfile(diretorioDestino,nomeArquivo))
@@ -197,10 +205,15 @@ class UploadImages:
 
             #for generic use, test fullpath directory delimiter
             #and replace in case of using Linux path
+            print("caminhoArquivo1=" + caminhoArquivo)
             caminhoArquivo.replace("/","\\")
+            print("caminhoArquivo2=" + caminhoArquivo)
             command = ''
-            if not (os.path.isfile(diretorioDestino+'/'+ nomeArquivo+'.zr')):
-                command = ['robocopy', os.path.dirname(caminhoArquivo), diretorioDestino, nomeArquivo]
+            if not (os.path.isfile(diretorioDestino+os.path.dirname(caminhoSalvar) + '/' + nomeArquivo + '.zr')):
+                command = ['robocopy', os.path.dirname(caminhoArquivo), diretorioDestino+os.path.dirname(caminhoSalvar), nomeArquivo]
+                #command = ['robocopy', os.path.dirname(caminhoArquivo), diretorioDestino, nomeArquivo]
+                print("Caminho de onde foi copiado = " + os.path.dirname(caminhoArquivo)+"\\"+nomeArquivo)
+                print("CaminhoNovoArquivo = " + diretorioDestino + os.path.dirname(caminhoSalvar))
 
                 if command is not '':
 
@@ -224,7 +237,8 @@ class UploadImages:
                         sys.stdout.flush()
                         PyQt4.QtGui.QApplication.processEvents()
 
-                    arq = open(diretorioDestino + '/' + nomeArquivo + '.zr', "w")
+                    #arq = open(diretorioDestino + '/' + nomeArquivo + '.zr', "w")
+                    arq = open(diretorioDestino+os.path.dirname(caminhoSalvar) + '/' + nomeArquivo + '.zr', "w")
                     arq.close()
 
         elif "linux" in _platform:
@@ -235,13 +249,13 @@ class UploadImages:
 
             command = ''
             command1 = ''
-            if not (os.path.isfile(diretorioDestino + "//" + nomeArquivo + '.zr')):
+            if not (os.path.isfile(diretorioDestino+os.path.dirname(caminhoSalvar) + '/' + nomeArquivo + '.zr', "w")):
                 #testing if file path is samba relative
                 #TODO - Define other methods
                 if ("smb" in caminhoArquivo):
 
                     #defining command (depends on smbclient tools installed)
-                    command = ['/usr/bin/smbget', '--guest', '--nonprompt', caminhoArquivo, '-o', '%s/%s' % (diretorioDestino,nomeArquivo)]
+                    command = ['/usr/bin/smbget', '--guest', '--nonprompt', caminhoArquivo, '-o', '%s/%s' % (diretorioDestino+os.path.dirname(caminhoSalvar), nomeArquivo)]
 
                 if command is not '':
 
@@ -259,7 +273,7 @@ class UploadImages:
                         PyQt4.QtGui.QApplication.processEvents()
 
 
-                arq = open(diretorioDestino+'/'+nomeArquivo + '.zr', "w")
+                arq = open(diretorioDestino+os.path.dirname(caminhoSalvar) + '/' + nomeArquivo + '.zr', "w")
                 arq.close()
 
         else:
