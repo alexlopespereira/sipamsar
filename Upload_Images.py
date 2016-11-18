@@ -267,6 +267,7 @@ class UploadImages:
                         out = self.p.stdout.readline(500)
                         match = re.search('\\r.+\\r',out)
 
+
                         if out is not '' and match is not None:
                             self.dlg.textEditDownloadProgress.setText(match.group(0).split('\r')[1])
                         sys.stdout.flush()
