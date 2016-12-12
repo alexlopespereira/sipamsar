@@ -3,7 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="2f596775-b619-4802-b4c8-e0da05fead00" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Upload_Images.py" afterPath="$PROJECT_DIR$/Upload_Images.py" />
     </list>
     <ignored path="taskmanager.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -289,7 +288,14 @@
       <option name="project" value="LOCAL" />
       <updated>1479494742434</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Controle de Arvores de Diretorios">
+      <created>1481556940572</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1481556940572</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="ToolWindowManager">
