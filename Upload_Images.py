@@ -28,6 +28,7 @@ import resources
 from Upload_Images_dialog import UploadImagesDialog
 from dbconnection_dialog import dbconnectionDialog
 import os.path
+import os
 from PyQt4.QtSql import *
 from PyQt4.QtSql import QSqlQuery
 from PyQt4.QtCore import *
@@ -209,7 +210,7 @@ class UploadImages:
             caminhoArquivo.replace("/","\\")
             print("caminhoArquivo2=" + caminhoArquivo)
             command = ''
-            if not (os.path.isfile(diretorioDestino+os.path.dirname(caminhoSalvar) + '/' + nomeArquivo + '.zr')):
+            if not (os.path.isfile(diretorioDestino+os.path.dirname(caminhoSalvar) + "\\" + nomeArquivo + '.zr')):
                 command = ['robocopy', os.path.dirname(caminhoArquivo), diretorioDestino+os.path.dirname(caminhoSalvar), nomeArquivo]
                 #command = ['robocopy', os.path.dirname(caminhoArquivo), diretorioDestino, nomeArquivo]
                 print("Caminho de onde foi copiado = " + os.path.dirname(caminhoArquivo)+"\\"+nomeArquivo)
@@ -238,7 +239,10 @@ class UploadImages:
                         PyQt4.QtGui.QApplication.processEvents()
 
                     #arq = open(diretorioDestino + '/' + nomeArquivo + '.zr', "w")
-                    arq = open(diretorioDestino+os.path.dirname(caminhoSalvar) + '/' + nomeArquivo + '.zr', "w")
+                    print('Caminho ZR 1= ' + diretorioDestino+os.path.dirname(caminhoSalvar))
+                    if not os.path.exists(diretorioDestino+os.path.dirname(caminhoSalvar)):
+                        os.makedirs(diretorioDestino+os.path.dirname(caminhoSalvar))
+                    arq = open(diretorioDestino+os.path.dirname(caminhoSalvar) + "\\" + nomeArquivo + '.zr', "w")
                     arq.close()
 
         elif "linux" in _platform:
