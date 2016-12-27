@@ -10,7 +10,7 @@
 name=sipamsar
 qgisMinimumVersion=2.0
 description=This is a set of two tools. One of them is used to assign tasks to analyst. The tasks are represented by rectangle features representing geographic zones. The other tool can copy a bunch of images from a given source to the destiny chosen by the user. The user can select on QGIS the rectangles of the images that must be copied.
-version=1.4
+version=1.5
 author=Alex Lopes Pereira, Bruno Alphonsus e José Mário Fraga Miranda
 email=alex.pereira@sipam.gov.br
 
