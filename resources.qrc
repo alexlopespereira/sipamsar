@@ -2,5 +2,6 @@
     <qresource prefix="/plugins/sipamsar" >
         <file>icon.png</file>
         <file>upload.png</file>
+        <file>producao.png</file>
     </qresource>
 </RCC>

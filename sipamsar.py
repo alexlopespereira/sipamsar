@@ -29,6 +29,10 @@ from sipamsar_dialog import sipamsarDialog
 from dbconnection_dialog import dbconnectionDialog
 from Upload_Images_dialog import UploadImagesDialog
 from Upload_Images import UploadImages
+
+from producao_dialog import ProducaoDialog
+from producao import Producao
+
 import os.path
 from PyQt4.QtSql import *
 from PyQt4.QtSql import QSqlQuery
@@ -192,14 +196,23 @@ class sipamsar:
         self.uploadAction.setWhatsThis(QCoreApplication.translate("sipamsar", "Download/Upload Selected Images"))
         self.iface.addPluginToMenu("sipamsar", self.taskAction)
 
+        # create editAction that will start metadata editor
+        self.producaoAction = QAction(QIcon(":/plugins/sipamsar/producao.png"), QCoreApplication.translate("sipamsar", "Producao"), self.iface.mainWindow())
+        self.producaoAction.setStatusTip(QCoreApplication.translate("sipamsar", "Producao"))
+        self.producaoAction.setWhatsThis(QCoreApplication.translate("sipamsar", "Producao"))
+        self.iface.addPluginToMenu("sipamsar", self.taskAction)
+
+
         self.toolBar = self.iface.addToolBar(QCoreApplication.translate("sipamsar", "SipamSAR Toolbar"))
         self.toolBar.setObjectName(QCoreApplication.translate("sipamsar", "SipamSAR Toolbar"))
 
         self.taskAction.triggered.connect(self.doTask)
         self.uploadAction.triggered.connect(self.doUpload)
+        self.producaoAction.triggered.connect(self.doProducao)
 
         self.toolBar.addAction(self.taskAction)
         self.toolBar.addAction(self.uploadAction)
+        self.toolBar.addAction(self.producaoAction)
 
 
     def doTask(self):
@@ -209,6 +222,10 @@ class sipamsar:
         dlg2  = UploadImages(self.iface)
         dlg2.run()
 
+    def doProducao(self):
+        dlg3 = Producao(self.iface)
+        dlg3.run()
+
 
     def unload(self):
 
@@ -216,9 +233,11 @@ class sipamsar:
 
         self.iface.removePluginVectorMenu(self.tr("sipamsar"),self.taskAction)
         self.iface.removePluginVectorMenu(self.tr("sipamsar"),self.uploadAction)
+        self.iface.removePluginVectorMenu(self.tr("sipamsar"), self.producaoAction)
 
         self.iface.removeToolBarIcon(self.taskAction)
         self.iface.removeToolBarIcon(self.uploadAction)
+        self.iface.removeToolBarIcon(self.producaoAction)
 
     def removeRelationship(self):
         actlayer = qgis.utils.iface.activeLayer()

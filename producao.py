@@ -173,7 +173,7 @@ class Producao:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ':/plugins/Producao/producao.png'
+        icon_path = ':/plugins/sipamsar/producao.png'
         action = self.add_action(icon_path, text=self.tr(u'Produção'), callback=self.run, parent=self.iface.mainWindow())
         #action.setCheckable(True)
         #self.nearestFeatureMapTool.setAction(action)
