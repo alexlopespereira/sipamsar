@@ -7,7 +7,7 @@
                               -------------------
         begin                : 2016-11-18
         git sha              : $Format:%H$
-        copyright            : (C) 2016 by Luis
+        copyright            : (C) 2016 by Luis Cláudio Kairuz Pereira
         email                : engnavalmb@yahoo.com
  ***************************************************************************/
 
